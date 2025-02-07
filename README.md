@@ -16,8 +16,8 @@ ORCID: 0000-0002-6935-9113
 Email: adi@adriandenz.com 
 
 ## Access information
-The code contained in this repository is released under a CC-BY license which can be obtained from https://creativecommons.org/licenses/by/4.0/.
-This repository contains data from as series of studies, as listed in Tables 1 and S1 of the research article cited under [Reference](#Reference), which are publicly available or which the corresponding authors made available to us. For access to any data contained in this repository please consult the corresponding original publications referenced in the research article cited under [Reference](#Reference).
+The code contained in this repository is released under the MIT license, see the `LICENCE` file.
+This repository contains data from as series of studies, as listed in Tables 1 and S1 of the research article cited under [Reference](#Reference), which are publicly available or which the corresponding authors made available to us. For access to any data contained in this repository please consult the corresponding original publications referenced in the research article cited under [Reference](#Reference). 
 
 ## Citation
 If you use this code, please cite:
