@@ -1,0 +1,31 @@
+2021-11-23 received Complete_Breakdown.xlsx from Rebecca Nash (renamed avoiding white space and special characters). I will use this for the fit in the first place.
+
+2021-11-24 received Database_A1_with unpublished.xlsx from Rebecca Nash (renamed avoiding white space and special characters). I will use this and not 'Nash A1 Studies (with unpublished).xlsx which I reveived earlier from Tom.
+
+2021-11-24 added column bioassay_available to Database_A1_with unpublished.xlsx coding if concurrent bioassay data is available.
+
+2021-12-01 changed 'Trial code' to 'Trial_code' and added Trial_code to Complete_Breakdown.xlsx. removed IRS from Complete_Breakdown.xlsx.
+ 
+I have now removed duplicates in Rebecca's data set (for pairing in Rebecca's framework) directly in the excel sheet, and saved as Database_A1_with unpublished_split.xlsx. I have also overwritten Trial_code 20 by 19, and 18 by 17, since same BA data. 
+
+For dual ingredient nets, the corresponding BA data often contains dosage as xy + yz. With as.numeric(Dose) I put this to NA. But this will anyway be excluded. So, I decided to do this.
+
+Some BA is with blood fed mosquitoes, but I think only for pyriproxifen, which will be excluded here. So, I haven't recorded feeding status.
+
+Hand-treated nets were excluded. 
+
+Hand treated chlorfenapyr nets (chlorfenapyr_CTN) are not considered LLING2 and excluded. 
+
+For CDC BA, Acetone is the control.
+
+EHT: insecticide only missing for PermanNet P191, which will be excluded for my analysis. insecticide cypermethrin (same as alphacypermethrin?) only in very old study. all net_product NA's come from old nets. 
+
+Decided not to include Julien Zahouli's data as only lab strain BA data. NO, not sure. Isn't Tiassale strain wild type?
+
+For all studies with BA mortality = 100, I checked that mosquitoes were actually wild type: only 1 study (Tungu) used susceptible lab strain and was removed, and for two others I didn't find the information and they were KEPT in the data base. 
+
+We decided to exclude gravid mosquitoes both from numerator and denominator. 
+
+Asked Tom for missing or guessed hut types! Guess from location, Tom said. 
+
+'control (synergist)' is a real control, right? OK, Tom said. and 'deltamethrin (pbo synergism)' Ignore, Tom said.
