@@ -50,7 +50,7 @@ library("patchwork")
   
   df <- tibble(iter, mu_d, sigma_d, sigma_v, mu_x, sigma_x, p_b_control, p_h_control)
   
-  ## dose-response type plots BA
+  ## plot ID-BA
   ###########################
   c <- seq(0, 30, 0.05)
   dt_sim <- as.data.table(expand_grid(df, c))
@@ -134,12 +134,43 @@ library("patchwork")
   df_sim_EHT <- df_sim_EHT |>
     mutate(prob_D_h = ifelse(treat, p_h_control + ( 1 - p_h_control ) * pnorm( (mu_x - mu_d ) / sqrt(sigma_x^2 + sigma_d^2 ) ), p_h_control )    )
   
+  
   # plot
   p_EHT <- ggplot(df_sim_EHT) +
     geom_density(aes(x = prob_D_h)) +
-    facet_wrap(~ treat, labeller = "label_both") +
+    facet_wrap(~ treat, labeller = labeller(treat = c( `FALSE` = "Control EHT", `TRUE` = "Intervention EHT"))) +
     scale_x_continuous(labels = percent) +
-    xlab("mortality") 
+    xlab("Mortality [Probability]") 
   
   ggsave(file.path("plots_mechmodel_article_SI", "prior_pred_checks_EHT.png"), p_EHT)
   
+  
+  
+  ## plot DD-BA
+  ###########################
+  
+  df_sim_DDBA <- expand_grid(df, treat = c(FALSE, TRUE))
+  
+  # compute probabilities 
+  df_sim_DDBA <- df_sim_DDBA |>
+    mutate(prob_D_b = ifelse(treat, p_b_control + ( 1 - p_b_control ) * pnorm( (0 - mu_d ) / sqrt(sigma_v^2 + sigma_d^2 ) ), p_b_control )    )
+  
+  # plot
+  p_DDBA <- ggplot(df_sim_DDBA) +
+    geom_density(aes(x = prob_D_b)) +
+    facet_wrap(~ treat, labeller = labeller(treat = c( `FALSE` = "Control SB", `TRUE` = "DD-SB"))) +
+    scale_x_continuous(labels = percent) +
+    xlab("Mortality [Probability]") 
+  
+  ggsave(file.path("plots_mechmodel_article_SI", "prior_pred_checks_DD-SB.png"), p_EHT) 
+  
+  
+  ## combine plots
+  ###########################
+  
+  plot_comb <- p_log + p_DDBA + p_EHT  +
+    plot_annotation(tag_levels = list(c("A", "B", "C"))) +
+    plot_layout(guides = "collect") &
+    theme(legend.position="bottom")
+  
+  ggsave(file.path("plots_mechmodel_article_SI", "prior_pred_checks.png"), plot_comb, width = 12, height = 4.5)
