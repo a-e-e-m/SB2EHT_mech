@@ -99,7 +99,7 @@ library("patchwork")
     geom_line(aes(x = c, y = p, group = iter, colour = "sample curves"), alpha = 0.05 ) +
     geom_line(data = dt_sim_sum, aes(x = c, y = p_median, colour = "median"), alpha = 0.7, linewidth = 0.75) +
     scale_y_continuous(labels = percent) +
-    xlab("Insecticide challenge in ID-SB [Dose]") + ylab("Mortality in ID-SB [Probability]") +
+    xlab("Insecticide challenge [Dose]") + ylab("Mortality [Probability]") +
     labs(fill = "Area with probability mass", colour = "Dose-response curves") 
   
   p_log <- ggplot(dplyr::filter(dt_sim, iter %in% iter_sample, c > 0.01), aes(x = c)) +
@@ -113,7 +113,7 @@ library("patchwork")
     coord_trans(x = "log") +
     scale_x_continuous(breaks = c(0.01, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20)) +
     scale_y_continuous(labels = percent) +
-    xlab("Insecticide challenge in ID-SB [Dose]") + ylab("Mortality in ID-SB [Probability]") +
+    xlab("Insecticide challenge [Dose]") + ylab("Mortality [Probability]") +
     labs(fill = "Area with probability mass", colour = "Dose-response curves") 
 
   

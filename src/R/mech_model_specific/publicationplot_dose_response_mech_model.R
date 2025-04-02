@@ -178,7 +178,7 @@ for (ii in seq_along(sort(unique(lookup_group_number$group_number)))){
 # add real data and empirical estimates 
 p_B_facet <- p_B_facet +
   geom_pointrange(data = B_all_summary, 
-                  mapping = aes(x = times_disc_dose, y = median, ymin = q025, ymax = q975), colour = "black", size = 0.2, alpha = 0.9) +
+                  mapping = aes(x = times_disc_dose, y = median, ymin = q025, ymax = q975), shape = 1, colour = "black", size = 0.5,linewidth =0.5, alpha = 0.9) +
   geom_jitter(data = B_all, 
               mapping = aes(x = times_disc_dose, y = D_b / N_b), colour = "black", size = 0.5, alpha = 0.9) +
   # geom_text(data = B_all_summary |> filter(treat == 0),
@@ -187,8 +187,9 @@ p_B_facet <- p_B_facet +
   #                  vjust   = -1,
   #                 fontface = "bold") +
   ggh4x::facet_nested(insecticide_conversion ~ site + facet_col) +
+  theme(strip.text = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 11)) +
   scale_y_continuous(labels = percent) +
-  xlab("Insecticide challenge in ID-SB [Dose]") + ylab("Mortality in ID-SB [Probability]") +
+  xlab("Insecticide challenge [Dose]") + ylab("Mortality [Probability]") +
   labs(colour = "Fitted to data from", title = NULL) 
 
 

@@ -51,8 +51,8 @@ library(scales)
     scale_color_brewer(palette = "Dark2", name = "Dose") +
     geom_line(aes(x = c, y = p)) +
     geom_linerange(data = df_d |> filter(c %in% c(1,5,10)), aes(x = c, ymin = 0, ymax = p, colour = factor(c)), show.legend = FALSE) +
-    scale_x_continuous(name = "Insecticide challenge in ID-SB [Dose]", breaks = c(0, 1, 5, 10), labels = c("0", "1", "5", "10"), limits = c(0,15)) +
-    ylab("Killing effect [Probability]") + 
+    scale_x_continuous(name = "Insecticide challenge [Dose]", breaks = c(0, 1, 5, 10), labels = c("0", "1", "5", "10"), limits = c(0,15)) +
+    ylab("Killing [Probability]") + 
     scale_y_continuous(labels = percent, limits = c(0,1)) +
     coord_fixed(expand = TRUE) +
     theme(aspect.ratio=1)
