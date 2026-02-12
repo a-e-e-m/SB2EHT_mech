@@ -4,7 +4,7 @@
 This repository contains the code and data to reproduce the analysis in the research article "Integrating data from across insecticide resistance bioassay types using a mechanistic model incorporating mosquito genetic variation and behaviour" (full reference below).
 
 ## Reference
-> **Integrating data from across insecticide resistance bioassay types using a mechanistic model incorporating mosquito genetic variation and behaviour**
+> **Inferring a novel insecticide resistance metric and exposure variability in mosquito bioassays across Africa**
 > Adrian Denz, Mara D. Kont, Antoine Sanou, Thomas S. Churcher, Ben Lambert; 
 > bioRxiv 2024.03.09.584248; doi: https://doi.org/10.1101/2024.03.09.584248 
 
