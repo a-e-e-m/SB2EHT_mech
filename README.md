@@ -1,7 +1,7 @@
 # SB2EHT_mech
 
 ## Description
-This repository contains the code and data to reproduce the analysis in the research article "Integrating data from across insecticide resistance bioassay types using a mechanistic model incorporating mosquito genetic variation and behaviour" (full reference below).
+This repository contains the code and data to reproduce the analysis in the research article "Inferring a novel insecticide resistance metric and exposure variability in mosquito bioassays across Africa" (full reference below).
 
 ## Reference
 > **Inferring a novel insecticide resistance metric and exposure variability in mosquito bioassays across Africa**
