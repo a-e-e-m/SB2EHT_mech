@@ -12,15 +12,12 @@
 library("HDInterval")
 library("tidyr")
 library("dplyr")
-library("reshape2")
 library("rstan")
 library("stringr")
-library("patchwork")
 library("data.table")
-#library("ggrepel")
 library("scales")
 library("ggplot2")
-library("RColorBrewer")
+library("patchwork")
 
 # source script containing needed functions
 functionsfolder <- file.path('./src/R/functions')
@@ -306,6 +303,7 @@ if (length(prob_D_b) !=0){
 }
 
 if (length(prob_D_h) !=0){    
+  highlight_groups <- 19:27
   # sumarise probability estimates
   # data.table 
   # TODO: Turn this into a function
@@ -372,15 +370,37 @@ if (length(prob_D_h) !=0){
     ggtitle("Experimental hut trial") + 
     labs(colour = "Country", shape = "Insecticide")
   
-  p_H_treat <- ggplot(H_all_summary |> filter(treat == 1)) +
+  p_H_treat2 <- ggplot(H_all_summary |> filter(treat == 1)) +
     scale_fill_brewer(palette = "Dark2") +
     scale_color_brewer(palette = "Dark2") +
     scale_shape_manual(name = 'Insecticide', values = shapes4insecticides_treat_publication, drop = F) +
     geom_abline(intercept = 0, slope = 1, color = 'grey') +
     geom_smooth(aes(x = MLE, y = pred_median), alpha = 0.6, colour = "black", method="lm", se=FALSE) + 
-    geom_point(aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+    # horizontal CI
+    geom_linerange(
+      data = \(x) dplyr::filter(x, group_number %in% highlight_groups),
+      aes(y = pred_median, xmin = q025, xmax = q975),
+      colour = "black",
+      linewidth = 1.2
+    ) +
     geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+    # vertical CI
+    geom_linerange(
+      data = \(x) dplyr::filter(x, group_number %in% highlight_groups),
+      aes(x = MLE, ymin = pred_q025, ymax = pred_q975),
+      colour = "black",
+      linewidth = 1.2
+    ) +
     geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+    # points
+    geom_point(
+      data = \(x) dplyr::filter(x, group_number %in% highlight_groups),
+      aes(x = MLE, y = pred_median),
+      colour = "black",
+      size = 3.5
+    ) +
+    geom_point(aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+    # format
     ylab("Predicted EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
     scale_x_continuous(labels = percent) +
     scale_y_continuous(labels = percent) +
@@ -389,19 +409,20 @@ if (length(prob_D_h) !=0){
 }  
 
 # plot actual vs predicted
+
 if (length(prob_D_h) !=0){    
   # combine plots
-  plot_comb <- p_B / p_H +
-    plot_layout(guides = "collect") & 
+  plot_comb <- (p_B / p_H +
+    plot_layout(guides = "collect")) + 
     theme(legend.position="bottom", text=element_text(size=9), aspect.ratio=1) 
   
-  plot_comb_treat <- p_B_treat + p_H_treat +
+  plot_comb_treat <- (p_B_treat + p_H_treat +
     plot_annotation(tag_levels = 'A') +
-    plot_layout(guides = "collect") & 
-    scale_shape_discrete(drop = F) &
-    theme(legend.position="bottom", text=element_text(size=9), aspect.ratio=1) & 
-    coord_fixed(ratio = 1, xlim = c(0,1), ylim = c(0,1)) &
-    labs(title = NULL) &
+    plot_layout(guides = "collect")) +
+    scale_shape_discrete(drop = F) +
+    theme(legend.position="bottom", text=element_text(size=9), aspect.ratio=1) +
+    coord_fixed(ratio = 1, xlim = c(0,1), ylim = c(0,1)) +
+    labs(title = NULL) +
     guides(colour = guide_legend(order = 1, nrow = 2), 
            shape = guide_legend(order = 2, nrow = 2)) 
   
