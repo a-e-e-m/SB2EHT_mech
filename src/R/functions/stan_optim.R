@@ -1,5 +1,7 @@
 stan_optim <- function(model, with_feeding, BA_only, add_data = NA, run, iter = 1) {
   
+  # NOTE: data frames are still called B, H, H_f in here but it is the same as _all versions in other scripts/functions
+  
   ## config
   library('tidyverse')
   library('rstan')
@@ -12,23 +14,45 @@ stan_optim <- function(model, with_feeding, BA_only, add_data = NA, run, iter = 
   model_file <- paste0("./src/stan/", model, ".stan", collapse = NULL)
   m <- stan_model(file = model_file)
   
-  # load data
-  B <- readRDS(file.path("fitting", run,  "B.rds"))
+  # load data and rename variables by appending "_b", "_h", "_h_f" to prevent confusion
+  B <- readRDS(file.path("fitting", run,  "B_all.rds"))
   S_b <- nrow(B)
+  
+  # quick fix
+  B <- B |> select(!c("treat"))
+  
+  B <- B %>%
+    rename_with(~ str_replace(., "_b$", ""), .cols = everything()) %>%  # Remove trailing _b if present
+    rename_with(~ paste0(., "_b"), .cols = everything()) 
   
   if (!BA_only){
     H <- readRDS(file.path("fitting", run,  "H_all.rds"))
+    
+    # quick fix
+    H <- H |> select(!c("treat"))
+    
+    H <- H %>%
+      rename_with(~ str_replace(., "_h$", ""), .cols = everything()) %>%  # Remove trailing _b if present
+      rename_with(~ paste0(., "_h"), .cols = everything())  
+    
   }else{H <- tibble()}
   S_h <- nrow(H)
   
   if (with_feeding){
     H_f <- readRDS(file.path("fitting", run,  "H_f_all.rds"))
+    
+    # quick fix
+    H <- H |> select(!c("treat"))
+    
+    H_f <- H_f %>%
+      rename_with(~ str_replace(., "_h_f$", ""), .cols = everything()) %>%  # Remove trailing _b if present
+      rename_with(~ paste0(., "_h_f"), .cols = everything()) 
   }else{H_f <- tibble()}
   S_h_f <- nrow(H_f)
   
   # add additional, readily stan readable data, if given
   # if given, copy also to run folder 
-  if (!is.na(add_data)){
+  if (!(is.na(add_data) | nchar(add_data) == 0)){
     add_data_list <- readRDS(file.path("data", "data_add", add_data))
     saveRDS(add_data_list, file = file.path("fitting", run, add_data))
   } else {
@@ -37,6 +61,7 @@ stan_optim <- function(model, with_feeding, BA_only, add_data = NA, run, iter = 
   
   trials <- readRDS(file.path("fitting", run,  "trials.rds"))
   
+  # put data together
   input_stan <- c(as.list(B), as.list(H), as.list(H_f), list(S_b = S_b, S_h = S_h, S_h_f = S_h_f), trials, add_data_list )
   
   # LOO and exactLOO

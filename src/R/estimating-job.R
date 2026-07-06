@@ -21,9 +21,10 @@ invisible(sapply(files.source, function(x) source(paste0(functionsfolder, "/", x
 # get model index from argument passed to this script
 args = commandArgs(trailingOnly=TRUE)
 i <- as.numeric(args[1])
+file_models2run <- ifelse(length(args) >= 2, args[2], "./models2run.csv")
 
 # read in job specification from models2run
-models2run <- read.csv2(file='./models2run.csv', stringsAsFactors=FALSE)
+models2run <- read.csv2(file=file_models2run, stringsAsFactors=FALSE)
 run <- as.character(models2run$run[i])
 
 

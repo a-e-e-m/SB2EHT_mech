@@ -6,6 +6,8 @@ validfit <- function(model, init_function = "random", with_feeding, BA_only, add
   # pareto_k_threshold = 0.5 or at most 0.7 is recommended
   # Note: exactLOO means exact LOO only for data points with pareto k parameter above pareto_k_threshold. 
   # Hence, for exactLOO==1, LOO==1 is required and pareto_k_threshold.
+  # NOTE: data frames are still called B, H, H_f in here but it is the same as _all versions in other scripts/functions
+  
   
   ## config
   if (LOO == 1){
@@ -23,23 +25,34 @@ validfit <- function(model, init_function = "random", with_feeding, BA_only, add
   model_file <- paste0("./src/stan/", model, ".stan", collapse = NULL)
   m <- stan_model(file = model_file)
   
-  # load data
+  # load data and rename variables by appending "_b", "_h", "_h_f" to prevent confusion before combining data
   B <- readRDS(file.path("fitting", run,  "B_all.rds"))
   S_b <- nrow(B)
   
+  B <- B %>%
+    rename_with(~ str_replace(., "_b$", ""), .cols = everything()) %>%  # Remove trailing _b if present
+    rename_with(~ paste0(., "_b"), .cols = everything())  
   if (!BA_only){
     H <- readRDS(file.path("fitting", run,  "H_all.rds"))
+    
+    H <- H %>%
+      rename_with(~ str_replace(., "_h$", ""), .cols = everything()) %>%  # Remove trailing _h if present
+      rename_with(~ paste0(., "_h"), .cols = everything())  
   }else{H <- tibble()}
   S_h <- nrow(H)
   
   if (with_feeding){
     H_f <- readRDS(file.path("fitting", run,  "H_f_all.rds"))
+    
+    H_f <- H_f %>%
+      rename_with(~ str_replace(., "_h_f$", ""), .cols = everything()) %>%  # Remove trailing h_f if present
+      rename_with(~ paste0(., "_h_f"), .cols = everything())  
   }else{H_f <- tibble()}
   S_h_f <- nrow(H_f)
   
   # add additional, readily stan readable data, if given
   # if given, copy also to run folder 
-  if (!is.na(add_data)){
+  if (!(is.na(add_data) | nchar(add_data) == 0)){
     add_data_list <- readRDS(file.path("data", "data_add", add_data))
     saveRDS(add_data_list, file = file.path("fitting", run, add_data))
   } else {
@@ -48,6 +61,7 @@ validfit <- function(model, init_function = "random", with_feeding, BA_only, add
   
   trials <- readRDS(file.path("fitting", run,  "trials.rds"))
   
+  # put data together
   input_stan <- c(as.list(B), as.list(H), as.list(H_f), list(S_b = S_b, S_h = S_h, S_h_f = S_h_f), trials, add_data_list )
   
   saveRDS(input_stan, file=file.path("fitting", run, "input_stan.rds"))
@@ -68,15 +82,15 @@ validfit <- function(model, init_function = "random", with_feeding, BA_only, add
   # set initial values for all chains based on passed init_function
   if (init_function == "random" | init_function == ""){
     inits_list <- "random"
-  } 
-  else if (init_function == "est_all"){
+  } else if (init_function == "0" | init_function == 0) {
+    inits_list <- "0"
+  } else if (init_function == "est_all"){
     est <- readRDS(file.path("fitting", run,  "est.rds"))
     inits_list <- list()
     for (k in 1:chains){
       inits_list = append(inits_list, list(as.list(est$par)))
     }
-  } 
-  else {
+  } else {
     inits_list <- list()
     for (k in 1:chains){
       inits_list = append(inits_list, list(do.call(init_function, list(k))))
@@ -146,12 +160,12 @@ validfit <- function(model, init_function = "random", with_feeding, BA_only, add
       rm(list = c("input_stan", "B", "H", "H_f"))
         
       # load data
-      B <- readRDS(file.path("fitting", run,  "B.rds"))
+      B <- readRDS(file.path("fitting", run,  "B_all.rds"))
       S_b <- nrow(B)
-      H <- readRDS(file.path("fitting", run,  "H.rds"))
+      H <- readRDS(file.path("fitting", run,  "H_all.rds"))
       
       if (with_feeding){
-        H_f <- readRDS(file.path("fitting", run,  "H_f.rds"))
+        H_f <- readRDS(file.path("fitting", run,  "H_f_all.rds"))
       }else{H_f <- tibble()}
       
       # add additional, readily stan readable data, if given
