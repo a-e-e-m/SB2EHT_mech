@@ -68,6 +68,18 @@ if (with_feeding){
 # group_number IDs with ID-SB data
 T_bint_indices <- trials[["T_bint_indices"]]
 
+# group_number_conversion with intdose BA only data set
+B_all_BAonly <- readRDS(file.path(paste0("fitting/", models2run$run[3]) , 'B_all.rds'))
+group_number_conversion <- B_all_BAonly |> 
+  filter(!control) |>
+  select(country, site, year, insecticide, group_number) |>
+  unique() |>
+  rename(group_number_conversion = group_number) |>
+  mutate(year = as.character(year),
+         country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
+                             TRUE ~ country))
+
+
 # loading model fit
 #############
 fit_i <- readRDS(file.path(dir_i, 'fit.rds'))
@@ -352,7 +364,8 @@ if (length(prob_D_h) !=0){
            hdi_l = hdi(qbeta, 0.95, shape1 = D_h + 1, shape2 = N_h - D_h + 1)[1],
            hdi_r = hdi(qbeta, 0.95, shape1 = D_h + 1, shape2 = N_h - D_h + 1)[2]
     )  |> 
-    left_join(prob_D_h_summary, by = c("group_number", "control", "treat"))
+    left_join(prob_D_h_summary, by = c("group_number", "control", "treat")) |>
+    left_join(group_number_conversion)
   
   p_H <- ggplot(H_all_summary) +
     scale_fill_brewer(palette = "Dark2") +
@@ -418,16 +431,16 @@ if (length(prob_D_h) !=0){
       aes(
         x = MLE,
         y = pred_median,
-        label = group_number
+        label = group_number_conversion
       ),
       size = 3,
-      force = 5,
-      box.padding = 1.5,
+      force = 1.5,
+      box.padding = 0.75,
       max.overlaps = Inf,
       point.padding = 0.2,
       segment.color = "grey30",
       segment.size = 0.3,
-      seed = 123
+      seed = 1
     ) +
     # format
     ylab("Predicted EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
@@ -438,20 +451,19 @@ if (length(prob_D_h) !=0){
 }  
 
 # plot actual vs predicted
-
 if (length(prob_D_h) !=0){    
   # combine plots
-  plot_comb <- (p_B / p_H +
-    plot_layout(guides = "collect")) + 
+  plot_comb <- p_B / p_H +
+    plot_layout(guides = "collect") & 
     theme(legend.position="bottom", text=element_text(size=9), aspect.ratio=1) 
   
-  plot_comb_treat <- (p_B_treat + p_H_treat +
+  plot_comb_treat <- p_B_treat + p_H_treat +
     plot_annotation(tag_levels = 'A') +
-    plot_layout(guides = "collect")) +
-    scale_shape_discrete(drop = F) +
-    theme(legend.position="bottom", text=element_text(size=9), aspect.ratio=1) +
-    coord_fixed(ratio = 1, xlim = c(0,1), ylim = c(0,1)) +
-    labs(title = NULL) +
+    plot_layout(guides = "collect") & 
+    scale_shape_discrete(drop = F) &
+    theme(legend.position="bottom", text=element_text(size=9), aspect.ratio=1) & 
+    coord_fixed(ratio = 1, xlim = c(0,1), ylim = c(0,1)) &
+    labs(title = NULL) &
     guides(colour = guide_legend(order = 1, nrow = 2), 
            shape = guide_legend(order = 2, nrow = 2)) 
   
@@ -460,8 +472,4 @@ if (length(prob_D_h) !=0){
 } else {
   ggsave(file.path(dir_i, "postpc_SBonly_treat_quantile.png"), p_B_treat, width = 10, height = 6)
 }
-
-
-
-
 
