@@ -65,25 +65,18 @@ nT_int <- length(T_bint_indices)
 B_all <- readRDS(file.path(dir_i, 'B_all.rds')) |>
   mutate(country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
                              TRUE ~ country)) |> 
-  select(!c("treat_b"))
+  select(!c("treat_b")) |>
+  filter(group_number %in% T_bint_indices)
 
 if (!BA_only){
   H_all <- readRDS(file.path(dir_i, 'H_all.rds')) |>
     mutate(country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
                                TRUE ~ country),
            H_row_id = row_number()) |> 
-    select(!c("treat_h"))
+    select(!c("treat_h")) |>
+    filter(group_number %in% T_bint_indices)
   
 }else{H_all <- tibble()}
-
-if (with_feeding){
-  H_f_all <- readRDS(file.path(dir_i, 'H_f_all.rds')) |>
-    mutate(country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
-                               TRUE ~ country),
-           H_row_id = row_number()) |> 
-    select(!c("treat_h"))
-  
-}else{H_f_all <- tibble()}
 
 
 # loading LOGO model fits
@@ -100,14 +93,6 @@ for (k in seq(1, nT_int)){
   fit_k <- readRDS(file.path(dir_k, 'fit.rds'))
   source(file.path("./src/R/model_pred_snipets", paste0(models2run$model[i], ".R")), local=TRUE)
   predictions <- bind_rows(predictions, draws_k_spread)
-}
-
-# for models with feeding data
-if (with_feeding){
-  # check whether there is a mismatch between the group_numbers with feeding prob predictions and group_numbers declared to have feeding data in trials
-  if (!all.equal(sort(unique(pull(filter(predictions, !is.na(prob_AF)), group_number))), trials$T_f_indices[trials$T_f_indices != 0 ])){
-    message("WARNING: Mismatch between group_numbers with feeding prob prediction summaries and group_numbers declared to have feeding data in trials. Possibly some feeding probability predictions produced NAs.")
-  }
 }
 
 # save predictions to run folder
@@ -184,10 +169,9 @@ p_H <- ggplot(aVSp_summary) +
   scale_shape_manual(values = shapes4insecticides) +
   # scale_color_manual(values = colours4country) +
   geom_abline(intercept = 0, slope = 1, color = 'grey') +
-  geom_point(aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort), fill = factor(country, levels = allcountries_sort), shape = insecticide)) +
-  geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
-  geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
-  geom_smooth(aes(x = MLE, y = pred_median), alpha = 0.6, colour = "black", method="lm", se=FALSE) +
+  geom_point(aes(x = MLE, y = pred_median, colour = factor(group_number))) +
+  geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(group_number))) +
+  geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(group_number))) +
   xlim(0,1) + ylim(0,1) +
   theme(legend.position="right", text=element_text(size=9), aspect.ratio=1) +
   ylab("Predicted EHT mortality") + xlab("Actual EHT mortality")

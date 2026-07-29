@@ -17,6 +17,7 @@ library("stringr")
 library("data.table")
 library("scales")
 library("ggplot2")
+library("ggrepel")
 library("patchwork")
 
 # source script containing needed functions
@@ -45,7 +46,6 @@ BA_only <- as.logical(models2run$BA_only[i])
 dir_i <- paste0("fitting/", models2run$run[i]) # folder
 trials <- readRDS(file.path(dir_i, 'trials.rds'))
 
-
 # loading real data
 #############
 B_all <- readRDS(file.path(dir_i, 'B_all.rds')) |>
@@ -64,6 +64,9 @@ if (with_feeding){
                                TRUE ~ country))
 }else{H_f_all <- tibble()}
 
+
+# group_number IDs with ID-SB data
+T_bint_indices <- trials[["T_bint_indices"]]
 
 # loading model fit
 #############
@@ -303,10 +306,8 @@ if (length(prob_D_b) !=0){
 }
 
 if (length(prob_D_h) !=0){    
-  highlight_groups <- 19:27
   # sumarise probability estimates
   # data.table 
-  # TODO: Turn this into a function
   # H
   col_D_h <- paste("V", seq(1, nrow(H_all),1), sep = "")
   prob_D_h <- as.data.table(prob_D_h)[, iter := .I]
@@ -370,36 +371,64 @@ if (length(prob_D_h) !=0){
     ggtitle("Experimental hut trial") + 
     labs(colour = "Country", shape = "Insecticide")
   
-  p_H_treat2 <- ggplot(H_all_summary |> filter(treat == 1)) +
+  p_H_treat <- ggplot(H_all_summary |> filter(treat == 1)) +
     scale_fill_brewer(palette = "Dark2") +
     scale_color_brewer(palette = "Dark2") +
     scale_shape_manual(name = 'Insecticide', values = shapes4insecticides_treat_publication, drop = F) +
     geom_abline(intercept = 0, slope = 1, color = 'grey') +
     geom_smooth(aes(x = MLE, y = pred_median), alpha = 0.6, colour = "black", method="lm", se=FALSE) + 
-    # horizontal CI
-    geom_linerange(
-      data = \(x) dplyr::filter(x, group_number %in% highlight_groups),
-      aes(y = pred_median, xmin = q025, xmax = q975),
-      colour = "black",
-      linewidth = 1.2
+    # DD-SB groups
+      geom_linerange(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                     aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+      geom_linerange(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                     aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+      geom_point(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                 aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+    # ID-SB groups
+      # horizontal CI
+      geom_linerange(
+        data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+        aes(y = pred_median, xmin = q025, xmax = q975),
+        colour = "grey30",
+        linewidth = 1.2
+      ) +
+      geom_linerange(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                     aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+      # vertical CI
+      geom_linerange(
+        data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+        aes(x = MLE, ymin = pred_q025, ymax = pred_q975),
+        colour = "grey30",
+        linewidth = 1.2
+      ) +
+      geom_linerange(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                     aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+      # points
+      geom_point(
+        data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+        aes(x = MLE, y = pred_median, shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))),
+        colour = "grey30",
+        size = 2.5
+      ) +
+      geom_point(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                 aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+      # text labels
+    geom_label_repel(
+      data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+      aes(
+        x = MLE,
+        y = pred_median,
+        label = group_number
+      ),
+      size = 3,
+      force = 5,
+      box.padding = 1.5,
+      max.overlaps = Inf,
+      point.padding = 0.2,
+      segment.color = "grey30",
+      segment.size = 0.3,
+      seed = 123
     ) +
-    geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
-    # vertical CI
-    geom_linerange(
-      data = \(x) dplyr::filter(x, group_number %in% highlight_groups),
-      aes(x = MLE, ymin = pred_q025, ymax = pred_q975),
-      colour = "black",
-      linewidth = 1.2
-    ) +
-    geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
-    # points
-    geom_point(
-      data = \(x) dplyr::filter(x, group_number %in% highlight_groups),
-      aes(x = MLE, y = pred_median),
-      colour = "black",
-      size = 3.5
-    ) +
-    geom_point(aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
     # format
     ylab("Predicted EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
     scale_x_continuous(labels = percent) +
