@@ -64,13 +64,15 @@ nT_int <- length(T_bint_indices)
 ################################
 B_all <- readRDS(file.path(dir_i, 'B_all.rds')) |>
   mutate(country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
-                             TRUE ~ country))
+                             TRUE ~ country)) |> 
+  select(!c("treat_b"))
 
 if (!BA_only){
   H_all <- readRDS(file.path(dir_i, 'H_all.rds')) |>
     mutate(country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
                                TRUE ~ country),
-           H_row_id = row_number())
+           H_row_id = row_number()) |> 
+    select(!c("treat_h"))
   
 }else{H_all <- tibble()}
 
@@ -78,7 +80,8 @@ if (with_feeding){
   H_f_all <- readRDS(file.path(dir_i, 'H_f_all.rds')) |>
     mutate(country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
                                TRUE ~ country),
-           H_row_id = row_number())
+           H_row_id = row_number()) |> 
+    select(!c("treat_h"))
   
 }else{H_f_all <- tibble()}
 
@@ -91,15 +94,12 @@ models2run_LOGO_run <- read.csv2(file_models2run_LOGO_run)
 
 # collect samples for LOGO
 predictions <- data.frame()
-elpd <- data.frame()
+
 for (k in seq(1, nT_int)){
   dir_k <- file.path("fitting", models2run_LOGO_run$run[k]) 
   fit_k <- readRDS(file.path(dir_k, 'fit.rds'))
-  
   source(file.path("./src/R/model_pred_snipets", paste0(models2run$model[i], ".R")), local=TRUE)
-  
   predictions <- bind_rows(predictions, draws_k_spread)
-  elpd <- bind_rows(elpd, elpd_k)
 }
 
 # for models with feeding data
@@ -112,9 +112,6 @@ if (with_feeding){
 
 # save predictions to run folder
 saveRDS(predictions, file = file.path(dir_i, "predictions.rds"))
-
-# save elpd to run folder
-saveRDS(elpd, file = file.path(dir_i, "elpd.rds"))
 
 
 # summarise
@@ -145,7 +142,7 @@ saveRDS(elpd, file = file.path(dir_i, "elpd.rds"))
   # NOTE: separate summary since data in predictions is multiplied (by draws sample size)
   data_summary <- H_all |>
     filter(!control) |>
-    group_by(group_number, secondai_ID) |>
+    group_by(group_number) |>
     summarise(
       D_h = sum(D_h),
       N_h = sum(N_h),
@@ -199,23 +196,6 @@ ggsave(file = file.path(dir_i, "LOGO-CV-actVSpred.png"), plot=p_H, width = 8, he
 saveRDS(p_H, file = file.path(dir_i, "LOGO-CV-actVSpred.rds"))
 
 
-# plot feeding if applicable
-if (with_feeding) {
-  p_H_f <- ggplot(aVSp_summary) +
-    scale_shape_manual(values = shapes4insecticides) +
-    # scale_color_manual(values = colours4country) +
-    geom_abline(intercept = 0, slope = 1, color = 'grey') +
-    geom_point(aes(x = MLE, y = pred_f_median, colour = factor(country, levels = allcountries_sort), fill = factor(country, levels = allcountries_sort), shape = insecticide)) +
-    geom_linerange(aes(y = pred_f_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
-    geom_linerange(aes(x = MLE, ymin = pred_f_q025, ymax = pred_f_q975, colour = factor(country, levels = allcountries_sort))) +
-    geom_smooth(aes(x = MLE, y = pred_f_median), alpha = 0.6, colour = "black", method="lm", se=FALSE) +
-    xlim(0,1) + ylim(0,1) +
-    theme(legend.position="right", text=element_text(size=9), aspect.ratio=1) +
-    ylab("Predicted EHT feeding out of alive") + xlab("Actual EHT feeding out of alive")
-  
-  ggsave(file = file.path(dir_i, "LOGO-CV-actVSpred_feeding.png"), plot=p_H_f, width = 8, height = 8)
-  saveRDS(p_H_f, file = file.path(dir_i, "LOGO-CV-actVSpred_feeding.rds"))
-}
 
 
 
