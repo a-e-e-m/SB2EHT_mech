@@ -48,8 +48,6 @@ richardscurve_C1_A0_K1 <- function( x, B, M, nu){
 models2run <- read.csv(file = './models2run.csv', sep = ';', stringsAsFactors = FALSE)
 
 # select one line from models2run.csv
-# set index manually
-i <- 179
 # or get index from argument passed to this script
 args = commandArgs(trailingOnly=TRUE)
 i <- as.numeric(args[1])
@@ -58,7 +56,8 @@ with_feeding <- as.logical(models2run$with_feeding[i])
 BA_only <- as.logical(models2run$BA_only[i])
 dir_i <- paste0("fitting/", models2run$run[i]) # folder
 trials <- readRDS(file.path(dir_i, 'trials.rds'))
-nT <- trials$nT 
+T_bint_indices <- trials[["T_bint_indices"]]
+nT_int <- length(T_bint_indices)
 
 
 # loading real data
@@ -93,7 +92,7 @@ models2run_LOGO_run <- read.csv2(file_models2run_LOGO_run)
 # collect samples for LOGO
 predictions <- data.frame()
 elpd <- data.frame()
-for (k in seq(1,nT)){
+for (k in seq(1, nT_int)){
   dir_k <- file.path("fitting", models2run_LOGO_run$run[k]) 
   fit_k <- readRDS(file.path(dir_k, 'fit.rds'))
   

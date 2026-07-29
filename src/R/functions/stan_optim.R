@@ -18,8 +18,8 @@ stan_optim <- function(model, with_feeding, BA_only, add_data = NA, run, iter = 
   B <- readRDS(file.path("fitting", run,  "B_all.rds"))
   S_b <- nrow(B)
   
-  # quick fix
-  B <- B |> select(!c("treat"))
+  # quick fix due to duplicated variable 
+  B <- B |> select(!c("treat_b"))
   
   B <- B %>%
     rename_with(~ str_replace(., "_b$", ""), .cols = everything()) %>%  # Remove trailing _b if present
@@ -28,8 +28,8 @@ stan_optim <- function(model, with_feeding, BA_only, add_data = NA, run, iter = 
   if (!BA_only){
     H <- readRDS(file.path("fitting", run,  "H_all.rds"))
     
-    # quick fix
-    H <- H |> select(!c("treat"))
+    # quick fix due to duplicated variable 
+    H <- H |> select(!c("treat_h"))
     
     H <- H %>%
       rename_with(~ str_replace(., "_h$", ""), .cols = everything()) %>%  # Remove trailing _b if present
@@ -41,8 +41,8 @@ stan_optim <- function(model, with_feeding, BA_only, add_data = NA, run, iter = 
   if (with_feeding){
     H_f <- readRDS(file.path("fitting", run,  "H_f_all.rds"))
     
-    # quick fix
-    H <- H |> select(!c("treat"))
+    # quick fix due to duplicated variable 
+    H <- H |> select(!c("treat_h"))
     
     H_f <- H_f %>%
       rename_with(~ str_replace(., "_h_f$", ""), .cols = everything()) %>%  # Remove trailing _b if present
