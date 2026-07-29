@@ -215,7 +215,7 @@ if (length(prob_D_b) !=0){
       geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
       xlim(0,1) + ylim(0,1) +
       facet_wrap( ~ treat, labeller = label_both) +
-      ylab("Predicted SB mortality [Probability]") + xlab("Actual SB mortality [Probability]") +
+      ylab("Estimated SB mortality [Probability]") + xlab("Actual SB mortality [Probability]") +
       scale_x_continuous(labels = percent) +
       scale_y_continuous(labels = percent)+
       ggtitle("Bio assay") + 
@@ -227,10 +227,63 @@ if (length(prob_D_b) !=0){
       scale_shape_manual(name = 'Insecticide', values = shapes4insecticides_treat_publication, drop = F) +
       geom_abline(intercept = 0, slope = 1, color = 'grey') +
       geom_smooth(aes(x = MLE, y = pred_median), alpha = 0.6, colour = "black", method="lm", se=FALSE) +
-      geom_point(aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort), shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
-      geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
-      geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
-      ylab("Predicted SB mortality [Probability]") + xlab("Actual SB mortality [Probability]") +
+      # DD-SB groups
+        geom_linerange(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                       aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+        geom_linerange(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                       aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+        geom_point(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                   aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+      # ID-SB groups
+        # horizontal CI
+        geom_linerange(
+          data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+          aes(y = pred_median, xmin = q025, xmax = q975),
+          colour = "grey30",
+          linewidth = 1.2
+        ) +
+        geom_linerange(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                       aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+        # vertical CI
+        geom_linerange(
+          data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+          aes(x = MLE, ymin = pred_q025, ymax = pred_q975),
+          colour = "grey30",
+          linewidth = 1.2
+        ) +
+        geom_linerange(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                       aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+        # points
+        geom_point(
+          data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+          aes(x = MLE, y = pred_median, shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))),
+          colour = "grey30",
+          size = 2.5
+        ) +
+        geom_point(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                   aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+        # text labels
+        geom_text_repel(
+          aes(
+            x = MLE,
+            y = pred_median,
+            label = if_else(
+              group_number %in% T_bint_indices,
+              as.character(times_disc_dose),
+              ""
+            )
+          ),
+          point.padding = 0.3,
+          max.overlaps = Inf,
+          size = 2.3,
+          force = 2,
+          box.padding = 1.1,
+          segment.color = "grey30",
+          segment.size = 0.3,
+          seed = 11
+        ) +
+      #format
+      ylab("Estimated SB mortality [Probability]") + xlab("Actual SB mortality [Probability]") +
       scale_x_continuous(labels = percent) +
       scale_y_continuous(labels = percent) +
       ggtitle("Bio assay") + 
@@ -378,7 +431,7 @@ if (length(prob_D_h) !=0){
     geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
     xlim(0,1) + ylim(0,1) +
     facet_wrap( ~ treat, labeller = label_both) +
-    ylab("Predicted EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
+    ylab("Estimated EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
     scale_x_continuous(labels = percent) +
     scale_y_continuous(labels = percent) +
     ggtitle("Experimental hut trial") + 
@@ -443,7 +496,7 @@ if (length(prob_D_h) !=0){
       seed = 1
     ) +
     # format
-    ylab("Predicted EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
+    ylab("Estimated EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
     scale_x_continuous(labels = percent) +
     scale_y_continuous(labels = percent) +
     ggtitle("Experimental hut trial") + 

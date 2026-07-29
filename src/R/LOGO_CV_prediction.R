@@ -68,15 +68,27 @@ B_all <- readRDS(file.path(dir_i, 'B_all.rds')) |>
   select(!c("treat_b")) |>
   filter(group_number %in% T_bint_indices)
 
+# group_number_conversion with intdose BA only data set
+B_all_BAonly <- readRDS(file.path(paste0("fitting/", models2run$run[3]) , 'B_all.rds'))
+group_number_conversion <- B_all_BAonly |> 
+  filter(!control) |>
+  select(country, site, year, insecticide, group_number) |>
+  unique() |>
+  rename(group_number_conversion = group_number) |>
+  mutate(country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
+                             TRUE ~ country))
+
 if (!BA_only){
   H_all <- readRDS(file.path(dir_i, 'H_all.rds')) |>
     mutate(country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
                                TRUE ~ country),
            H_row_id = row_number()) |> 
     select(!c("treat_h")) |>
-    filter(group_number %in% T_bint_indices)
+    filter(group_number %in% T_bint_indices) |>
+    left_join(group_number_conversion)
   
 }else{H_all <- tibble()}
+
 
 
 # loading LOGO model fits
@@ -106,7 +118,10 @@ saveRDS(predictions, file = file.path(dir_i, "predictions.rds"))
     summarise(
       pred_median = median(prob_D_h),
       pred_q025 = quantile(prob_D_h, probs = 0.025), 
-      pred_q975 = quantile(prob_D_h, probs = 0.975)
+      pred_q975 = quantile(prob_D_h, probs = 0.975),
+      EHT_killing_effect_median = median(EHT_killing_effect),
+      EHT_killing_effect_q025 = quantile(EHT_killing_effect, probs = 0.025), 
+      EHT_killing_effect_q975 = quantile(EHT_killing_effect, probs = 0.975),
     )
   
   # also summarise feeding prob if applicable
@@ -127,7 +142,7 @@ saveRDS(predictions, file = file.path(dir_i, "predictions.rds"))
   # NOTE: separate summary since data in predictions is multiplied (by draws sample size)
   data_summary <- H_all |>
     filter(!control) |>
-    group_by(group_number) |>
+    group_by(group_number, group_number_conversion) |>
     summarise(
       D_h = sum(D_h),
       N_h = sum(N_h),
@@ -159,24 +174,62 @@ saveRDS(predictions, file = file.path(dir_i, "predictions.rds"))
 
 # plotting
 ################################
-# fix aes scales for all plots
-shapes4insecticides <- c("none"= "plus", "pyrethroid" = "circle filled", "permethrin" = "square filled", 'deltamethrin' = "diamond filled", 'alphacypermethrin' = "triangle filled", 'lambdacyhalothrin' = "triangle down filled")
-shapes4huttype <- c('East' = 3, 'West' = 4, 'Ifakara' = 8)
-allcountries_sort = sort(unique(B_all$country))
+  # fix aes scales for all plots
+  shapes4insecticides <- c("none"= "plus", "pyrethroid" = "circle filled", "permethrin" = "square filled", 'deltamethrin' = "diamond filled", 'alphacypermethrin' = "triangle filled", 'lambdacyhalothrin' = "triangle down filled")
+  shapes4insecticides_treat_publication <- c(
+    'alphacypermethrin' = "circle",
+    'deltamethrin' = "triangle",
+    "permethrin" = "square",
+    "pyrethroid" = "plus"
+  )
+  shapes4huttype <- c('East' = 3, 'West' = 4, 'Ifakara' = 8)
+  allcountries_sort = sort(unique(B_all$country))
 
 # plot mortality
 p_H <- ggplot(aVSp_summary) +
-  scale_shape_manual(values = shapes4insecticides) +
+  scale_shape_manual(name = 'Insecticide', values = shapes4insecticides_treat_publication, drop = T) +
   # scale_color_manual(values = colours4country) +
   geom_abline(intercept = 0, slope = 1, color = 'grey') +
-  geom_point(aes(x = MLE, y = pred_median, colour = factor(group_number))) +
-  geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(group_number))) +
-  geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(group_number))) +
-  xlim(0,1) + ylim(0,1) +
-  theme(legend.position="right", text=element_text(size=9), aspect.ratio=1) +
-  ylab("Predicted EHT mortality") + xlab("Actual EHT mortality")
+  # horizontal CI
+    geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975), colour = "grey30", linewidth = 1.2) +
+    geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+  # vertical CI
+    geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975), colour = "grey30", linewidth = 1.2) +  
+    geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+  # points
+    geom_point(aes(x = MLE, y = pred_median, shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), colour = "grey30", size = 2.5) +
+    geom_point(aes(x = MLE, y = pred_median, shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication)), colour = factor(country, levels = allcountries_sort))) +
+  # text labels
+  geom_label_repel(
+    aes(
+      x = MLE,
+      y = pred_median,
+      label = group_number_conversion
+    ),
+    size = 3,
+    force = 2,
+    box.padding = 1.5,
+    max.overlaps = Inf,
+    point.padding = 0.2,
+    segment.color = "grey30",
+    segment.size = 0.3,
+    seed = 1
+  ) +
+  # format
+  theme(legend.position="bottom", text=element_text(size=9), aspect.ratio=1) +
+  ylab("Predicted EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
+  ggtitle("Experimental hut trial") + 
+  labs(colour = "Country", shape = "Insecticide") +
+  scale_x_continuous(
+    limits = c(0, 1),
+    labels = scales::percent
+  ) +
+  scale_y_continuous(
+    limits = c(0, 1),
+    labels = scales::percent
+  )
 
-ggsave(file = file.path(dir_i, "LOGO-CV-actVSpred.png"), plot=p_H, width = 8, height = 8)
+ggsave(file = file.path(dir_i, "LOGO-CV-actVSpred.png"), plot=p_H, width = 6, height = 6)
 saveRDS(p_H, file = file.path(dir_i, "LOGO-CV-actVSpred.rds"))
 
 

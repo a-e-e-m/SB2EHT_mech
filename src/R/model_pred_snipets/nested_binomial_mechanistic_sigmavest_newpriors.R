@@ -6,4 +6,5 @@ draws_k_spread <- spread_draws(fit_k, p_b_control, sigma_v, mu_d[group_number], 
   mutate(
     # Note: In contrast to the stan file, the parameters like p_h_control are already the ones for the specific group_number (no '[T_h]' needed)
     prob_D_h = p_h_control + ( 1 - p_h_control ) * pnorm( (mu_x - mu_d ) / sqrt(sigma_x^2 + sigma_d^2 )),
+    EHT_killing_effect = 0 + ( 1 - 0 ) * pnorm( (mu_x - mu_d ) / sqrt(sigma_x^2 + sigma_d^2 ))
   )

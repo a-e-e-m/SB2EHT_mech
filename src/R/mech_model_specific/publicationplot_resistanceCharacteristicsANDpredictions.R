@@ -66,6 +66,10 @@ dir_i_BAonly <- paste0("fitting/", models2run$run[i_BAonly]) # folder
 # load data joint model (BA and EHT)
 fit_i <- readRDS(file.path(dir_i, 'fit.rds'))
 
+# load LOGO-CV predictions and add converted group_numbers
+predictions_summary <- readRDS(file = file.path(dir_i, "predictions_summary.rds")) |>
+  left_join(group_number_lookup)
+  
 
 # parameter draws and lethal dose computation
 # joint model
@@ -203,16 +207,23 @@ df_scale <- tibble(killing = rep(0.1,10), prob = seq(0.1, 1, 0.1), x = 4 )
   p_EHT <- ggplot(df_scale, aes(x = x, y = killing)) +
     scale_fill_viridis_c() +
     geom_col(aes(fill = prob), width = 8, show.legend = FALSE) +
-    geom_pointrange(data = params_B_summary |> filter(as.numeric(Group) <= 7), aes(x = as.numeric(Group), y = EHT_killing_effect_median, ymin = EHT_killing_effect_q025, ymax = EHT_killing_effect_q975), colour = "white") +
-    geom_label(data = params_B_summary |>  filter(as.numeric(Group) <= 7), aes(x = as.numeric(Group), y = EHT_killing_effect_median, label = as.character(Group)), size = 2.5) +
+    # estimated
+    geom_pointrange(data = params_B_summary |> filter(as.numeric(Group) <= 7), aes(x = as.numeric(Group) - 0.15, y = -Inf, ymin = EHT_killing_effect_q025, ymax = EHT_killing_effect_q975), colour = "white", linetype = "dashed", linewidth = 1) +
+    # predicted
+    geom_pointrange(data = predictions_summary, aes(x = as.numeric(group_number_pub) + 0.15, y = EHT_killing_effect_median, ymin = EHT_killing_effect_q025, ymax = EHT_killing_effect_q975), colour = "white", linetype = "solid", size = 0.7, linewidth = 1) +
+    # labels
+    # geom_label(data = params_B_summary |>  filter(as.numeric(Group) <= 7), aes(x = as.numeric(Group), y = EHT_killing_effect_median, label = as.character(Group)), size = 2.5) +
     theme(
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank(),
+      # axis.text.x = element_blank(),
+      # axis.ticks.x = element_blank(),
       legend.position = "none",
       aspect.ratio = 4
     ) +
     coord_cartesian(expand = TRUE) +
-    scale_x_continuous(name = "Assay pair") +
+    scale_x_continuous(
+      name = "Assay pair",
+      breaks = sort(unique(predictions_summary$group_number_pub))
+    ) +
     scale_y_continuous(name = "ITN killing effect [Probability]", labels = percent) +
     theme(legend.position = "none")
   
