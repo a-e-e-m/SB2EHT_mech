@@ -90,35 +90,3 @@ model{
   p_b_control ~ beta(1,10);
   p_h_control ~ beta(1,10);
 }
-
-generated quantities{
-  // declaration for log likelihood for LOO
-  vector[LOO ? nT : 0] log_lik;
-  vector[exactLOO ? 1 : 0] lio;
-
-  // log_lik for LOO with PSIS
-  if (LOO){
-    // initialise log_lik
-    for (k in 1:nT) {
-      log_lik[k] = 0; 
-    }
-    
-    // go through EHT treatment data only and put log_lik to respective log_lik for each data set
-      // likelihood for mortality in EHT
-      for (i in 1:S_h){
-        if (treat_h[i] == 1){
-          log_lik[T_h[i]] = log_lik[T_h[i]] + binomial_lpmf( D_h[i] | N_h[i], prob_D_h[T_h[i]] );
-        }
-      }
-  }  
-  
-  // log_lik for exactLOO
-  if (exactLOO){
-    lio[1] = 0; // initialise
-    
-    // likelihood for mortality in EHT
-    for (i in 1:S_h_LO[1]){
-      lio[1] = lio[1] + binomial_lpmf( D_h_LO[i] | N_h_LO[i], prob_D_h[LOdataset] );
-    }
-  }
-}
