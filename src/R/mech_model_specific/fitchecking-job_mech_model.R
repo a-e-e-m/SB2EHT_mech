@@ -221,6 +221,19 @@ if (length(prob_D_b) !=0){
       ggtitle("Bio assay") + 
       labs(colour = "Country", shape = "Insecticide")
     
+    # compute CCC and MAE for centers, for treatment data only
+    CCC_b_treat <- B_all_summary |>
+      ungroup() |>
+      filter(treat == 1) |>
+      yardstick::ccc( truth = MLE, estimate = pred_median) |>
+      pull(.estimate)
+    
+    MAE_b_treat <- B_all_summary |>
+      ungroup() |>
+      filter(treat == 1) |>
+      yardstick::mae( truth = MLE, estimate = pred_median) |>
+      pull(.estimate)
+    
     p_B_treat <- ggplot(B_all_summary |> filter(treat == 1)) +
       scale_fill_brewer(palette = "Dark2") +
       scale_color_brewer(palette = "Dark2") +
@@ -282,6 +295,17 @@ if (length(prob_D_b) !=0){
           segment.size = 0.3,
           seed = 11
         ) +
+      # metrics
+      annotate(
+        "text",
+        x = -Inf, y = Inf,
+        label = paste0(
+          "CCC = ", round(CCC_b_treat, 2),
+          "\nMAE = ", round(MAE_b_treat, 2)
+        ),
+        hjust = -0.5, vjust = 1.8,
+        size = 4.5
+      ) +
       #format
       ylab("Estimated SB mortality [Probability]") + xlab("Actual SB mortality [Probability]") +
       scale_x_continuous(labels = percent) +
@@ -437,6 +461,20 @@ if (length(prob_D_h) !=0){
     ggtitle("Experimental hut trial") + 
     labs(colour = "Country", shape = "Insecticide")
   
+  # compute CCC and MAE for centers, for treatment data only
+  CCC_h_treat <- H_all_summary |>
+    ungroup() |>
+    filter(treat == 1) |>
+    yardstick::ccc( truth = MLE, estimate = pred_median) |>
+    pull(.estimate)
+  
+  MAE_h_treat <- H_all_summary |>
+    ungroup() |>
+    filter(treat == 1) |>
+    yardstick::mae( truth = MLE, estimate = pred_median) |>
+    pull(.estimate)
+  
+  # plot
   p_H_treat <- ggplot(H_all_summary |> filter(treat == 1)) +
     scale_fill_brewer(palette = "Dark2") +
     scale_color_brewer(palette = "Dark2") +
@@ -494,6 +532,17 @@ if (length(prob_D_h) !=0){
       segment.color = "grey30",
       segment.size = 0.3,
       seed = 1
+    ) +
+    # metrics
+    annotate(
+      "text",
+      x = -Inf, y = Inf,
+      label = paste0(
+        "CCC = ", round(CCC_h_treat, 2),
+        "\nMAE = ", round(MAE_h_treat, 2)
+      ),
+      hjust = -0.5, vjust = 1.8,
+      size = 4.5
     ) +
     # format
     ylab("Estimated EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
