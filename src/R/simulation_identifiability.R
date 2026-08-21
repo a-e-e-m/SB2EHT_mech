@@ -122,20 +122,20 @@ df_LD_sim <- bind_rows(df_LD_sim, df_control_sim)
 # add labels
 df_all <- df_all |>
   mutate(
-    mu_label = paste0("mu[T] == ", mu_T),
-    sigma_label = paste0("sigma[T] == ", sigma_T)
+    mu_label = paste0("mu[phantom(.)*phantom(.)*T] == ", mu_T),
+    sigma_label = paste0("sigma[phantom(.)*phantom(.)*T] == ", sigma_T)
   )
 
 df_LD <- df_LD |>
   mutate(
-    mu_label = paste0("mu[T] == ", mu_T),
-    sigma_label = paste0("sigma[T] == ", sigma_T)
+    mu_label = paste0("mu[phantom(.)*phantom(.)*T] == ", mu_T),
+    sigma_label = paste0("sigma[phantom(.)*phantom(.)*T] == ", sigma_T)
   )
 
 df_LD_sim <- df_LD_sim |>
   mutate(
-    mu_label = paste0("mu[T] == ", mu_T),
-    sigma_label = paste0("sigma[T] == ", sigma_T)
+    mu_label = paste0("mu[phantom(.)*phantom(.)*T] == ", mu_T),
+    sigma_label = paste0("sigma[phantom(.)*phantom(.)*T] == ", sigma_T)
   )
 
 
@@ -366,20 +366,20 @@ density_rho01 <- density_rho01 |>
 # add labels
 density_rho0 <- density_rho0 |>
   mutate(
-    mu_label = paste0("mu[T] == ", mu_T),
-    sigma_label = paste0("sigma[T] == ", sigma_T)
+    mu_label = paste0("mu[phantom(.)*phantom(.)*T] == ", mu_T),
+    sigma_label = paste0("sigma[phantom(.)*phantom(.)*T] == ", sigma_T)
   )
 
 density_rho01 <- density_rho01 |>
   mutate(
-    mu_label = paste0("mu[T] == ", mu_T),
-    sigma_label = paste0("sigma[T] == ", sigma_T)
+    mu_label = paste0("mu[phantom(.)*phantom(.)*T] == ", mu_T),
+    sigma_label = paste0("sigma[phantom(.)*phantom(.)*T] == ", sigma_T)
   )
 
 density_true <- density_true |>
   mutate(
-    mu_label = paste0("mu[T] == ", mu_T),
-    sigma_label = paste0("sigma[T] == ", sigma_T)
+    mu_label = paste0("mu[phantom(.)*phantom(.)*T] == ", mu_T),
+    sigma_label = paste0("sigma[phantom(.)*phantom(.)*T] == ", sigma_T)
   )
 
 # plot function
@@ -392,7 +392,7 @@ plot_densities <- function(density_posterior, rho_label) {
       aes(
         x = Dose,
         y = density,
-        linetype = "True lethal dose distribution"
+        linetype = "Given lethal dose distribution"
       ),
       colour = "black",
       linewidth = 1.5
@@ -410,7 +410,7 @@ plot_densities <- function(density_posterior, rho_label) {
     ) +
     scale_linetype_manual(
       name = NULL,
-      values = c("True lethal dose distribution" = "solid")
+      values = c("Given lethal dose distribution" = "solid")
     ) +
     scale_colour_manual(
       name = "Estimated lethal dose distribution\nbased on intensity dose bioassays up to:",
@@ -461,28 +461,12 @@ p_rho01 <- plot_densities(
 # compose
 library(patchwork)
 
-p_comb_rho0 <-
-  (p_doseresponse_rho0 + labs(title = NULL)) /
-  (p_rho0 + labs(title = NULL)) +
-  plot_annotation(
-    title = expression(rho == 0)
-  )
-
 p_comb_rho01 <-
   (p_doseresponse_rho01 + labs(title = NULL)) /
   (p_rho01 + labs(title = NULL)) +
-  plot_annotation(
-    title = expression(rho == 0.1)
-  )
+  plot_annotation(tag_levels = list(c("A", "B"))) 
 
-# save plots
-ggsave(
-  "simulation_rho0.png",
-  p_comb_rho0,
-  width = 12,
-  height = 12
-)
-
+# save plot
 ggsave(
   "simulation_rho01.png",
   p_comb_rho01,

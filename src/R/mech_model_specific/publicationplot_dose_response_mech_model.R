@@ -211,5 +211,5 @@ g <- reposition_legend(g, legend =  g_legend(p_B_facet), 'bottom', panel='panel-
 
 
 # save plot
-ggsave(file.path("plots_mechmodel_article", "dose-response-curves_onlypublished_quantile_new.png"), g, width = 12, height = 6)
+ggsave(file.path("plots_mechmodel_article", "dose-response-curves_onlypublished_quantile_new2.png"), g, width = 12, height = 6)
 

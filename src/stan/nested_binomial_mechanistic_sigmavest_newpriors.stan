@@ -60,7 +60,7 @@ transformed parameters{
       if (treat_b[i] == 0){
         prob_D_b[i] = p_b_control;
       } else if (treat_b[i] == 1){
-        prob_D_b[i] = p_b_control + ( 1 - p_b_control ) * Phi( (log(times_disc_dose_b[i]) - mu_d[T_b[i]] ) / sqrt(sigma_v + sigma_d[T_b[i]]^2 ) ); 
+        prob_D_b[i] = p_b_control + ( 1 - p_b_control ) * Phi( (log(times_disc_dose_b[i]) - mu_d[T_b[i]] ) / sqrt(sigma_v^2 + sigma_d[T_b[i]]^2 ) ); 
       }
     }
       
