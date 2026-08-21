@@ -1,3 +1,5 @@
+ # simulation study to see what dose escalation, in terms of LD (relative), is needed for identifying the lethal dose distribution
+
 
 library(tidyverse)
 library(ggplot2)
@@ -68,7 +70,7 @@ rho_values <- c(0, rho_BB)
 # total per replicate
 N_b <- 50       # set this yourself
 
-
+# set seed
 set.seed(27)
 
 # simulate 5 mosquito death counts for control and all LDs, with total N_b each, corresponding to 5 replicates
@@ -78,7 +80,6 @@ rbetabinom <- function(p, N, rho) {
   phi <- 1 / rho - 1
   rbinom(1, N, rbeta(1, p * phi, (1 - p) * phi))
 }
-
 
 df_sim <- crossing(
   LD_prob = LD_probs,
@@ -92,7 +93,6 @@ df_sim <- crossing(
       \(p, N, rho) rbetabinom(p, N, rho)
     )
   )
-
 
 df_LD_sim <- df_LD |>
   left_join(df_sim, by = "LD_prob")
@@ -154,9 +154,7 @@ LD_colours <- c(
 plot_doseresponse <- function(rho_i) {
   
   ggplot(df_all) +
-    
     geom_line(aes(x = c, y = p)) +
-    
     geom_linerange(
       data = df_LD,
       aes(
@@ -167,7 +165,6 @@ plot_doseresponse <- function(rho_i) {
       ),
       show.legend = TRUE
     ) +
-    
     geom_point(
       data = df_LD_sim |> filter(rho == rho_i),
       aes(
@@ -178,36 +175,30 @@ plot_doseresponse <- function(rho_i) {
       size = 0.9,
       alpha = 0.7
     ) +
-    
     scale_colour_manual(
       name = "Dose",
       values = LD_colours,
       breaks = c("0.1", "0.2", "0.4", "0.6", "0.8", "0.9"),
       labels = c("LD10", "LD20", "LD40", "LD60", "LD80", "LD90")
     ) +
-    
     scale_x_continuous(
       name = "Insecticide challenge [Dose]",
       breaks = c(0, 1, 5, 10, 50),
       labels = c("0", "1", "5", "10", "50"),
       limits = c(0, 50)
     ) +
-    
     scale_y_continuous(
       name = "Mortality [Probability]",
       labels = scales::percent,
       limits = c(0, 1)
     ) +
-    
     facet_grid(
       rows = vars(sigma_label),
       cols = vars(mu_label),
       labeller = label_parsed
     ) +
-    
     coord_fixed(expand = TRUE) +
     theme(aspect.ratio = 2 / 3) +
-    
     ggtitle(bquote(rho == .(rho_i)))
 }
 
@@ -395,7 +386,6 @@ density_true <- density_true |>
 plot_densities <- function(density_posterior, rho_label) {
   
   ggplot() +
-    
     # true log-normal distribution
     geom_line(
       data = density_true,
@@ -407,7 +397,6 @@ plot_densities <- function(density_posterior, rho_label) {
       colour = "black",
       linewidth = 1.5
     ) +
-    
     # posterior mixture distributions
     geom_line(
       data = density_posterior,
@@ -419,12 +408,10 @@ plot_densities <- function(density_posterior, rho_label) {
       linewidth = 0.8,
       alpha = 0.6
     ) +
-    
     scale_linetype_manual(
       name = NULL,
       values = c("True lethal dose distribution" = "solid")
     ) +
-    
     scale_colour_manual(
       name = "Estimated lethal dose distribution\nbased on intensity dose bioassays up to:",
       values = c(
@@ -436,30 +423,24 @@ plot_densities <- function(density_posterior, rho_label) {
       ),
       breaks = c("LD20", "LD40", "LD60", "LD80", "LD90")
     ) +
-    
     facet_grid(
       rows = vars(sigma_label),
       cols = vars(mu_label),
       scales = "free_y",
       labeller = label_parsed
     ) +
-    
-    
     scale_x_sqrt(
       breaks = c(1, 5, 10, 20, 50, 100)
     ) +
-    
     coord_cartesian(
       xlim = c(0, 50),
       ylim = c(0,2)
     ) +
-    
     labs(
       x = "Lethal dose [Dose]",
       y = "Density",
       title = bquote(rho == .(rho_label))
     ) +
-    
     theme(
       aspect.ratio = 2 / 3
     )
@@ -474,10 +455,6 @@ p_rho01 <- plot_densities(
   density_rho01,
   rho_label = 0.1
 )
-
-
-
-
 
 
 
@@ -498,7 +475,7 @@ p_comb_rho01 <-
     title = expression(rho == 0.1)
   )
 
-
+# save plots
 ggsave(
   "simulation_rho0.png",
   p_comb_rho0,
