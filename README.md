@@ -80,6 +80,9 @@ It may be required to increase the sample size or to alter the tuning parameters
 
 To generate the figures and Tables contained in the research article cited under [Reference](#Reference), source all scripts starting with the string `publicationplot` or `publicationtables` in the folder `src/R/mech_model_specific`. Note that this requires both the SB only and the joint model (see `models2run.csv` rows with `Row ID` 3 and 4, respectively) were fitted (see [Inference](#Inference) above). Figures are saved in PNG format in the folders `plots_mechmodel_article/' and `plots_mechmodel_article_SI/'; tables are saved in html format in the folder `tables_mechmodel_article_SI`. 
 
+#### Cross-validation
+
+To perform a cross-validation with leave one group out (LOGO), leaving out one-by-one the intervention arm of the EHT for each assay pair, run the script `src/R/master_script_fitting_LOGO.R`, preferably on a HPC cluster. 
 
 ### Methodological information 
 

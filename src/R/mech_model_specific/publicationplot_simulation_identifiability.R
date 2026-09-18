@@ -468,7 +468,7 @@ p_comb_rho01 <-
 
 # save plot
 ggsave(
-  "simulation_rho01.png",
+  "plots_mechmodel_article_SI/simulation_rho01.png",
   p_comb_rho01,
   width = 12,
   height = 12
