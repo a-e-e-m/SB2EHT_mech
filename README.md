@@ -82,7 +82,7 @@ To generate the figures and Tables contained in the research article cited under
 
 #### Cross-validation
 
-To perform a cross-validation with leave one group out (LOGO), leaving out one-by-one the intervention arm of the EHT for each assay pair, run the script `src/R/master_script_fitting_LOGO.R`, preferably on a HPC cluster. 
+To perform a cross-validation with leave one group out (LOGO, leaving out one-by-one the intervention arm of the EHT for each assay pair), run the script `src/R/master_script_fitting_LOGO.R`, preferably on a HPC cluster. 
 
 ### Methodological information 
 
