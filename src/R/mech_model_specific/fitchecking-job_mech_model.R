@@ -571,6 +571,7 @@ if (length(prob_D_h) !=0){
   
   #ggsave(file.path(dir_i, "postpc_comb.png"), plot_comb, width = 10, height = 10)
   ggsave(file.path(dir_i, "postpc_comb_treat_quantile.png"), plot_comb_treat, width = 10, height = 6)
+  ggsave(file.path("plots_mechmodel_article", "postpc_comb_treat_quantile.png"), plot_comb_treat, width = 10, height = 6)
 } else {
   ggsave(file.path(dir_i, "postpc_SBonly_treat_quantile.png"), p_B_treat, width = 10, height = 6)
 }
