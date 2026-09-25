@@ -6,13 +6,13 @@
 ###############################
 ###############################
 # packages
-library("tidyverse")
 library("tidybayes")
 library("ggdist")
 library("rstan")
 library("patchwork")
 library("ggnewscale")
 library("RColorBrewer")
+library("tidyverse")
 
 # load runs
 models2run <- read.csv(file = './models2run.csv', sep = ';', stringsAsFactors = FALSE)
@@ -147,7 +147,7 @@ p_exposure_dose <- ggplot(data = draws_i_spread_exp |> filter(exposure_type %in%
   guides(fill = guide_legend(reverse = TRUE))
 
 p_exposure_dose_v <- p_exposure_dose +
-  coord_cartesian(xlim =c(0,2), ylim = c(0,0.85))
+  coord_cartesian(xlim =c(0,2), ylim = c(0,1))
   
 # comb plot
 p_comb_v <- wrap_plots(p_exposure_dose_v, p_lethal_dose, nrow = 1, ncol = 2, widths = c(1,3))  +

@@ -10,8 +10,8 @@ data{
   int S_b; // Number of bio assay data points
   int T_b[S_b]; // group index for bio assay data points
   int treat_b[S_b]; // 1 for treatment and 0 for control
-  int times_disc_dose[S_b]; 
-  int int_dose_available[S_b]; 
+  int times_disc_dose_b[S_b]; 
+  int int_dose_available_b[S_b]; 
   int N_b[S_b]; // Number total in bioassay
   int D_b[S_b]; // Number dead in bioassay
   
@@ -49,7 +49,7 @@ transformed parameters{
       if (treat_b[i] == 0){
         prob_D_b[i] = p_b_control[T_b[i]];
       } else if (treat_b[i] == 1){
-        prob_D_b[i] = p_b_control[T_b[i]] + ( 1 - p_b_control[T_b[i]] ) * Phi( (log(times_disc_dose[i]) - mu_d[T_b[i]] ) / sqrt(sigma_v + sigma_d[T_b[i]]^2 ) ); 
+        prob_D_b[i] = p_b_control[T_b[i]] + ( 1 - p_b_control[T_b[i]] ) * Phi( (log(times_disc_dose_b[i]) - mu_d[T_b[i]] ) / sqrt(sigma_v^2 + sigma_d[T_b[i]]^2 ) ); 
       }
     }
 }

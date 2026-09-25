@@ -12,15 +12,13 @@
 library("HDInterval")
 library("tidyr")
 library("dplyr")
-library("reshape2")
 library("rstan")
 library("stringr")
-library("patchwork")
 library("data.table")
-#library("ggrepel")
 library("scales")
 library("ggplot2")
-library("RColorBrewer")
+library("ggrepel")
+library("patchwork")
 
 # source script containing needed functions
 functionsfolder <- file.path('./src/R/functions')
@@ -48,7 +46,6 @@ BA_only <- as.logical(models2run$BA_only[i])
 dir_i <- paste0("fitting/", models2run$run[i]) # folder
 trials <- readRDS(file.path(dir_i, 'trials.rds'))
 
-
 # loading real data
 #############
 B_all <- readRDS(file.path(dir_i, 'B_all.rds')) |>
@@ -66,6 +63,21 @@ if (with_feeding){
     mutate(country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
                                TRUE ~ country))
 }else{H_f_all <- tibble()}
+
+
+# group_number IDs with ID-SB data
+T_bint_indices <- trials[["T_bint_indices"]]
+
+# group_number_conversion with intdose BA only data set
+B_all_BAonly <- readRDS(file.path(paste0("fitting/", models2run$run[3]) , 'B_all.rds'))
+group_number_conversion <- B_all_BAonly |> 
+  filter(!control) |>
+  select(country, site, year, insecticide, group_number) |>
+  unique() |>
+  rename(group_number_conversion = group_number) |>
+  mutate(year = as.character(year),
+         country = case_when(country == "BurkinaFaso" ~ "Burkina Faso",
+                             TRUE ~ country))
 
 
 # loading model fit
@@ -203,11 +215,24 @@ if (length(prob_D_b) !=0){
       geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
       xlim(0,1) + ylim(0,1) +
       facet_wrap( ~ treat, labeller = label_both) +
-      ylab("Predicted SB mortality [Probability]") + xlab("Actual SB mortality [Probability]") +
+      ylab("Estimated SB mortality [Probability]") + xlab("Actual SB mortality [Probability]") +
       scale_x_continuous(labels = percent) +
       scale_y_continuous(labels = percent)+
       ggtitle("Bio assay") + 
       labs(colour = "Country", shape = "Insecticide")
+    
+    # compute CCC and MAE for centers, for treatment data only
+    CCC_b_treat <- B_all_summary |>
+      ungroup() |>
+      filter(treat == 1) |>
+      yardstick::ccc( truth = MLE, estimate = pred_median) |>
+      pull(.estimate)
+    
+    MAE_b_treat <- B_all_summary |>
+      ungroup() |>
+      filter(treat == 1) |>
+      yardstick::mae( truth = MLE, estimate = pred_median) |>
+      pull(.estimate)
     
     p_B_treat <- ggplot(B_all_summary |> filter(treat == 1)) +
       scale_fill_brewer(palette = "Dark2") +
@@ -215,10 +240,74 @@ if (length(prob_D_b) !=0){
       scale_shape_manual(name = 'Insecticide', values = shapes4insecticides_treat_publication, drop = F) +
       geom_abline(intercept = 0, slope = 1, color = 'grey') +
       geom_smooth(aes(x = MLE, y = pred_median), alpha = 0.6, colour = "black", method="lm", se=FALSE) +
-      geom_point(aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort), shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
-      geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
-      geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
-      ylab("Predicted SB mortality [Probability]") + xlab("Actual SB mortality [Probability]") +
+      # DD-SB groups
+        geom_linerange(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                       aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+        geom_linerange(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                       aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+        geom_point(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                   aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+      # ID-SB groups
+        # horizontal CI
+        geom_linerange(
+          data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+          aes(y = pred_median, xmin = q025, xmax = q975),
+          colour = "grey30",
+          linewidth = 1.2
+        ) +
+        geom_linerange(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                       aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+        # vertical CI
+        geom_linerange(
+          data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+          aes(x = MLE, ymin = pred_q025, ymax = pred_q975),
+          colour = "grey30",
+          linewidth = 1.2
+        ) +
+        geom_linerange(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                       aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+        # points
+        geom_point(
+          data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+          aes(x = MLE, y = pred_median, shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))),
+          colour = "grey30",
+          size = 2.5
+        ) +
+        geom_point(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                   aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+        # text labels
+        geom_text_repel(
+          aes(
+            x = MLE,
+            y = pred_median,
+            label = if_else(
+              group_number %in% T_bint_indices,
+              as.character(times_disc_dose),
+              ""
+            )
+          ),
+          point.padding = 0.3,
+          max.overlaps = Inf,
+          size = 2.3,
+          force = 2,
+          box.padding = 1.1,
+          segment.color = "grey30",
+          segment.size = 0.3,
+          seed = 11
+        ) +
+      # metrics
+      annotate(
+        "text",
+        x = -Inf, y = Inf,
+        label = paste0(
+          "CCC = ", round(CCC_b_treat, 2),
+          "\nMAE = ", round(MAE_b_treat, 2)
+        ),
+        hjust = -0.5, vjust = 1.8,
+        size = 4.5
+      ) +
+      #format
+      ylab("Estimated SB mortality [Probability]") + xlab("Actual SB mortality [Probability]") +
       scale_x_continuous(labels = percent) +
       scale_y_continuous(labels = percent) +
       ggtitle("Bio assay") + 
@@ -308,7 +397,6 @@ if (length(prob_D_b) !=0){
 if (length(prob_D_h) !=0){    
   # sumarise probability estimates
   # data.table 
-  # TODO: Turn this into a function
   # H
   col_D_h <- paste("V", seq(1, nrow(H_all),1), sep = "")
   prob_D_h <- as.data.table(prob_D_h)[, iter := .I]
@@ -353,7 +441,8 @@ if (length(prob_D_h) !=0){
            hdi_l = hdi(qbeta, 0.95, shape1 = D_h + 1, shape2 = N_h - D_h + 1)[1],
            hdi_r = hdi(qbeta, 0.95, shape1 = D_h + 1, shape2 = N_h - D_h + 1)[2]
     )  |> 
-    left_join(prob_D_h_summary, by = c("group_number", "control", "treat"))
+    left_join(prob_D_h_summary, by = c("group_number", "control", "treat")) |>
+    left_join(group_number_conversion)
   
   p_H <- ggplot(H_all_summary) +
     scale_fill_brewer(palette = "Dark2") +
@@ -366,22 +455,97 @@ if (length(prob_D_h) !=0){
     geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
     xlim(0,1) + ylim(0,1) +
     facet_wrap( ~ treat, labeller = label_both) +
-    ylab("Predicted EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
+    ylab("Estimated EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
     scale_x_continuous(labels = percent) +
     scale_y_continuous(labels = percent) +
     ggtitle("Experimental hut trial") + 
     labs(colour = "Country", shape = "Insecticide")
   
+  # compute CCC and MAE for centers, for treatment data only
+  CCC_h_treat <- H_all_summary |>
+    ungroup() |>
+    filter(treat == 1) |>
+    yardstick::ccc( truth = MLE, estimate = pred_median) |>
+    pull(.estimate)
+  
+  MAE_h_treat <- H_all_summary |>
+    ungroup() |>
+    filter(treat == 1) |>
+    yardstick::mae( truth = MLE, estimate = pred_median) |>
+    pull(.estimate)
+  
+  # plot
   p_H_treat <- ggplot(H_all_summary |> filter(treat == 1)) +
     scale_fill_brewer(palette = "Dark2") +
     scale_color_brewer(palette = "Dark2") +
     scale_shape_manual(name = 'Insecticide', values = shapes4insecticides_treat_publication, drop = F) +
     geom_abline(intercept = 0, slope = 1, color = 'grey') +
     geom_smooth(aes(x = MLE, y = pred_median), alpha = 0.6, colour = "black", method="lm", se=FALSE) + 
-    geom_point(aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
-    geom_linerange(aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
-    geom_linerange(aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
-    ylab("Predicted EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
+    # DD-SB groups
+      geom_linerange(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                     aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+      geom_linerange(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                     aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+      geom_point(data = \(x) dplyr::filter(x, !(group_number %in% T_bint_indices)),
+                 aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+    # ID-SB groups
+      # horizontal CI
+      geom_linerange(
+        data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+        aes(y = pred_median, xmin = q025, xmax = q975),
+        colour = "grey30",
+        linewidth = 1.2
+      ) +
+      geom_linerange(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                     aes(y = pred_median, xmin = q025, xmax = q975, colour = factor(country, levels = allcountries_sort))) +
+      # vertical CI
+      geom_linerange(
+        data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+        aes(x = MLE, ymin = pred_q025, ymax = pred_q975),
+        colour = "grey30",
+        linewidth = 1.2
+      ) +
+      geom_linerange(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                     aes(x = MLE, ymin = pred_q025, ymax = pred_q975, colour = factor(country, levels = allcountries_sort))) +
+      # points
+      geom_point(
+        data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+        aes(x = MLE, y = pred_median, shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))),
+        colour = "grey30",
+        size = 2.5
+      ) +
+      geom_point(data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+                 aes(x = MLE, y = pred_median, colour = factor(country, levels = allcountries_sort),  shape = factor(insecticide, levels = names(shapes4insecticides_treat_publication))), show.legend = TRUE) +
+      # text labels
+    geom_label_repel(
+      data = \(x) dplyr::filter(x, group_number %in% T_bint_indices),
+      aes(
+        x = MLE,
+        y = pred_median,
+        label = group_number_conversion
+      ),
+      size = 3,
+      force = 1.5,
+      box.padding = 0.75,
+      max.overlaps = Inf,
+      point.padding = 0.2,
+      segment.color = "grey30",
+      segment.size = 0.3,
+      seed = 1
+    ) +
+    # metrics
+    annotate(
+      "text",
+      x = -Inf, y = Inf,
+      label = paste0(
+        "CCC = ", round(CCC_h_treat, 2),
+        "\nMAE = ", round(MAE_h_treat, 2)
+      ),
+      hjust = -0.5, vjust = 1.8,
+      size = 4.5
+    ) +
+    # format
+    ylab("Estimated EHT mortality [Probability]") + xlab("Actual EHT mortality [Probability]") +
     scale_x_continuous(labels = percent) +
     scale_y_continuous(labels = percent) +
     ggtitle("Experimental hut trial") + 
@@ -407,11 +571,8 @@ if (length(prob_D_h) !=0){
   
   #ggsave(file.path(dir_i, "postpc_comb.png"), plot_comb, width = 10, height = 10)
   ggsave(file.path(dir_i, "postpc_comb_treat_quantile.png"), plot_comb_treat, width = 10, height = 6)
+  ggsave(file.path("plots_mechmodel_article", "postpc_comb_treat_quantile.png"), plot_comb_treat, width = 10, height = 6)
 } else {
   ggsave(file.path(dir_i, "postpc_SBonly_treat_quantile.png"), p_B_treat, width = 10, height = 6)
 }
-
-
-
-
 

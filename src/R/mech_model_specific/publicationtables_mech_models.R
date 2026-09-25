@@ -58,10 +58,31 @@ dir_i_BAonly <- paste0("fitting/", models2run$run[i_BAonly]) # folder
   fit_i <- readRDS(file.path(dir_i, 'fit.rds'))
   # load data BAonly model
   fit_i_BAonly <- readRDS(file.path(dir_i_BAonly, 'fit.rds'))
+  # Hut data
+  H_all <- readRDS(file.path(dir_i, 'H_all.rds'))
 
   
 ## data groups table as csv
 data_summary <- read_csv(file.path(dir_i, 'data_summary.csv'))
+
+  # add seasonal / month information
+  B_months <- B_all |> group_by(group_number, site, year, insecticide) |>
+    summarise(
+      "SB months" = paste0(
+        min(as.integer(format(date, "%m"))),
+        "-",
+        max(as.integer(format(date, "%m")))
+        )
+    )
+  
+  H_months <- H_all |> group_by(group_number, site, year, insecticide) |>
+    summarise(
+      "EHT months" = paste0(
+        min(as.integer(format(date, "%m"))),
+        "-",
+        max(as.integer(format(date, "%m")))
+      )
+    )
 
 data_groups <- as_tibble(ungroup(data_summary)) |>
   left_join(as_tibble(ungroup(group_number_lookup)), 
@@ -69,6 +90,20 @@ data_groups <- as_tibble(ungroup(data_summary)) |>
   select(!c(insecticide, group_number_conversion)) |>
   mutate(Country = case_when(Country == "BurkinaFaso" ~ "Burkina Faso",
                              TRUE ~ Country)) |>
+  left_join(B_months, 
+            by = join_by(
+                "Group number" == group_number,
+                "Resistance bio assay site" == site,
+                "Year" == year,
+                "Insecticides tested in resistance bio assay" == insecticide
+    )) |>
+  left_join(H_months,
+            by = join_by(
+                "Group number" == group_number,
+                "EHT site" == site,
+                "Year" == year,
+                "Insecticides in nets" == insecticide
+              )) |>
   rename("Site" = "EHT site",
          "Group" = "group_number_pub",
          "SB protocol" = test_type,
@@ -83,6 +118,10 @@ data_groups <- as_tibble(ungroup(data_summary)) |>
          "Group number old" = "Group number") |>
   arrange(Group) |>
   relocate(Group, "Group number old", Reference, Country, Site, Year, "SB protocol", "Hut type", "Insecticides \nin SB", "Insecticide \non ITN", "ITN products", "Total in treated SB", "Total in control SB", "Total in intervention hut", "Total in control hut")
+
+
+  
+  
 
   #save as csv to then add citation keys in excel, then convert to latex by online tool and copy paste into overleaf
   write_csv2(data_groups, file = file.path(dir_i, "Data_groups_table.csv"))

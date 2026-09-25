@@ -16,13 +16,12 @@ ORCID: 0000-0002-6935-9113
 Email: adi@adriandenz.com 
 
 ## Access information
-The code contained in this repository is released under the MIT license, see the `LICENCE` file.
+The code contained in this repository is released under the MIT license, see the `LICENSE` file.
 This repository contains data from as series of studies, as listed in Tables 1 and S1 of the research article cited under [Reference](#Reference), which are publicly available or which the corresponding authors made available to us. For access to any data contained in this repository please consult the corresponding original publications referenced in the research article cited under [Reference](#Reference). 
 
 ## Citation
 If you use this code, please cite:
-> **Adrian Denz, SB2EHT_mech, 2025.**  
-> DOI: [Zenodo DOI]  
+> **Adrian Denz, SB2EHT_mech, 2026.**  
 > And include the full reference to the research article cited under [Reference](#Reference).
 
 ## Funding
@@ -68,7 +67,7 @@ To copy the code and data to your system, clone this repository to your file sys
 
 Readily processed SB and EHT data sets, including matching of assay pairs, used to fit the SB only and the joint SB and EHT models are contained in `fitting/data_onlyIDSB_noEHT` and `fitting/data_allSB_allEHT`, respectively. Specifically, `B.rds` holds the SB data as read in by Stan, `B_all.rds` holds the same data with additional variables for plotting, while`H.rds` and `H_all.rds` hold the analogous EHT data. For references to the original studies that collected the data, see the file `data_summary.csv` using the `Trial_code` ID. Note that for historical reasons, the assay pair ID used in the article is a permutation of the IDs in the variables `T_b` and `T_h` contained in `B.rds` and `H.rds`, respectively.
 
-The scripts and functions that were used to generate these data sets from the raw data are contained in `src/R` for illustration; the raw data files are however not included in this repository as they contain further data provided to us under restricted data sharing conditions. 
+The scripts and functions that were used to generate these data sets from the raw data are contained in `src/R` for illustration; the raw data files are not included in this repository as they contain further data provided to us under restricted data sharing conditions. However, all data used in research article cited under [Reference](#Reference) are available in this repo under `fitting/` as described above.
 
 #### Inference
 
@@ -78,8 +77,11 @@ It may be required to increase the sample size or to alter the tuning parameters
 
 #### Figures and Tables
 
-To generate the figures and Tables contained in the research article cited under [Reference](#Reference), source all scripts starting with the string `publicationplot` or `publicationtables` in the folder `src/R/mech_model_specific`. Note that this requires both the SB only and the joint model (see `models2run.csv` rows with `Row ID` 3 and 4, respectively) were fitted (see [Inference](#Inference) above). Figures are saved in PNG format in the folders `plots_mechmodel_article/' and `plots_mechmodel_article_SI/'; tables are saved in html format in the folder `tables_mechmodel_article_SI`. 
+To generate the figures and Tables contained in the research article cited under [Reference](#Reference), source all scripts starting with the string `publicationplot` or `publicationtables` in the folder `src/R/mech_model_specific`. Note that this requires both the SB only and the joint model (see `models2run.csv` rows with `Row ID` 3 and 4, respectively) were fitted (see [Inference](#Inference) above). Figures are saved in PNG format in the folders `plots_mechmodel_article/` and `plots_mechmodel_article_SI/`; tables are saved in html format in the folder `tables_mechmodel_article_SI`.
 
+#### Cross-validation
+
+To perform a cross-validation with leave one group out (LOGO, leaving out one-by-one the intervention arm of the EHT for each assay pair), run the script `src/R/master_script_fitting_LOGO.R`, preferably on a HPC cluster. 
 
 ### Methodological information 
 

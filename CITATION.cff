@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below and also cite the associated research article."
+title: "SB2EHT_mech"
+type: software
+version: 1.0.0
+
+authors:
+  - family-names: Denz
+    given-names: Adrian
+    orcid: "https://orcid.org/0000-0002-6935-9113"
+
+license: MIT
+
+repository-code: "https://github.com/a-e-e-m/SB2EHT_mech"
+
+abstract: >
+  code and data for the research article "Inferring a novel insecticide 
+  resistance metric and exposure variability in mosquito bioassays across Africa".
+
+keywords:
+  - malaria vector control
+  - insecticide resistance
+  - dose-response modelling
+  - susceptibility bioassays
+  - experimental hut trials
+  - ITN effectiveness
+  - Bayesian inference
+  - heterogeneity in resistance
+  - mathematical modelling

@@ -21,12 +21,13 @@ functionsfolder <- file.path('./src/R/functions')
 files.source <- list.files(functionsfolder)
 invisible(sapply(files.source, function(x) source(paste0(functionsfolder, "/", x))))
 
-
-models2run <- read.csv(file = './models2run.csv', sep = ';', stringsAsFactors = FALSE)
-
 # get model index from argument passed to this script
 args = commandArgs(trailingOnly=TRUE)
 i <- as.numeric(args[1])
+file_models2run <- ifelse(length(args) >= 2, args[2], "./models2run.csv")
+
+# read in job specification from models2run
+models2run <- read.csv2(file=file_models2run, stringsAsFactors=FALSE)
 
 # print model specification to output 
 models2run[i,]
@@ -94,43 +95,49 @@ models2run[i,]
                     paste0("There were ", num_divergent_i, " divergent transitions."),
                     paste0("The maximal tree depth was hit ", num_maxtreedepth_i, " times.")
                     ), file = file.path(dir_i, 'diagnostics.txt'))
+  
+  models2run[i, "rhat_max"] <- rhat_max
+  models2run[i, "bulkess_min"] <- bulkess_min
+  models2run[i, "tailess_min"] <- tailess_min
+  models2run[i, "num_divergent"] <- num_divergent_i
+  models2run[i, "num_maxtreedepth"] <- num_maxtreedepth_i
+  write.csv2(models2run, file = file_models2run, row.names=FALSE)
 
   # if (rhat_max >= 1.05) {write_lines("Rhat is too big.", file = file.path(dir_i, 'diagnostics.txt'), append = TRUE)}
   # if (bulkess_min <=400) {write_lines("Bulk ESS is too small.", file = file.path(dir_i, 'diagnostics.txt'), append = TRUE)}
   # if (tailess_min <=400) {write_lines("Tail ESS is too small.", file = file.path(dir_i, 'diagnostics.txt'), append = TRUE)}
   if (rhat_max >= 1.05) {write_lines(paste0(c("The badly mixing parameters (Rhat > 1.05) were: ", sum_df |> filter(Rhat > 1.05) |> pull(variable))), file = file.path(dir_i, 'diagnostics.txt'), append = TRUE)}
 
-
-  # chain plots
-  ###############################################
-  # scalar parameters of first level model
-  if (length(parameters_FL_scalar) > 0){
-    jpeg(file = file.path(dir_i, paste0('traceplot_','parameters_FL_scalar','.jpeg')),
-       width = 800, height = length(parameters_FL_scalar) * 100)
-
-    rstan::traceplot(fit_i, pars = parameters_FL_scalar, nrow = length(parameters_FL_scalar), inc_warmup = TRUE)
-    dev.off()
-  }
-
-  
-  # parameters with bad mixing
-  parameters_badmixing <- sum_df |> filter(Rhat > 1.05) |> pull(variable)
-  if (length(parameters_badmixing) > 0){
-  jpeg(file = file.path(dir_i, paste0('traceplot_','parameters_badmixing','.jpeg')),
-       width = 800, height = length(parameters_badmixing) * 100)
-  
-  rstan::traceplot(fit_i, pars = parameters_badmixing, nrow = length(parameters_badmixing), inc_warmup = TRUE)
-  dev.off()
-  }
-
-  ## pairs plots
-  ######################################################
-  # FL_scalar
-  if (length(parameters_FL_scalar) > 1){
-    jpeg(file = file.path(dir_i, paste0('pairs_','parameters_FL_scalar','.jpeg')),
-         width = length(parameters_FL_scalar)*300, height = length(parameters_FL_scalar)*200)
-  
-    pairs(fit_i, pars = parameters_FL_scalar)
-    dev.off()
-  }
+  # # chain plots
+  # ###############################################
+  # # scalar parameters of first level model
+  # if (length(parameters_FL_scalar) > 0){
+  #   jpeg(file = file.path(dir_i, paste0('traceplot_','parameters_FL_scalar','.jpeg')),
+  #      width = 800, height = length(parameters_FL_scalar) * 100)
+  # 
+  #   rstan::traceplot(fit_i, pars = parameters_FL_scalar, nrow = length(parameters_FL_scalar), inc_warmup = TRUE)
+  #   dev.off()
+  # }
+  # 
+  # 
+  # # parameters with bad mixing
+  # parameters_badmixing <- sum_df |> filter(Rhat > 1.05) |> pull(variable)
+  # if (length(parameters_badmixing) > 0){
+  # jpeg(file = file.path(dir_i, paste0('traceplot_','parameters_badmixing','.jpeg')),
+  #      width = 800, height = length(parameters_badmixing) * 100)
+  # 
+  # rstan::traceplot(fit_i, pars = parameters_badmixing, nrow = length(parameters_badmixing), inc_warmup = TRUE)
+  # dev.off()
+  # }
+  # 
+  # ## pairs plots
+  # ######################################################
+  # # FL_scalar
+  # if (length(parameters_FL_scalar) > 1){
+  #   jpeg(file = file.path(dir_i, paste0('pairs_','parameters_FL_scalar','.jpeg')),
+  #        width = length(parameters_FL_scalar)*300, height = length(parameters_FL_scalar)*200)
+  # 
+  #   pairs(fit_i, pars = parameters_FL_scalar)
+  #   dev.off()
+  # }
 
