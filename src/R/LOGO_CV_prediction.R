@@ -10,6 +10,7 @@ library(tidyverse)
 library(tidybayes)
 library(ggplot2)
 library(extraDistr)
+library(ggrepel)
 
 # source script containing needed functions
 functionsfolder <- file.path('./src/R/functions')
@@ -146,8 +147,6 @@ saveRDS(predictions, file = file.path(dir_i, "predictions.rds"))
     summarise(
       D_h = sum(D_h),
       N_h = sum(N_h),
-      A_h = sum(A),
-      AF_h = sum(AF),
       Trial_code = paste(unique(Trial_code), collapse = ', '),
       country = paste(unique(country), collapse = ', '),
       site = paste(unique(site), collapse = ', '),
@@ -161,10 +160,7 @@ saveRDS(predictions, file = file.path(dir_i, "predictions.rds"))
                               TRUE ~ insecticide),
       MLE = D_h / N_h, # note this is equivalent to the mode of beta(D_h + 1, N_h - D_h +1)
       q025 = qbeta(0.025, shape1 = D_h + 1, shape2 = N_h - D_h + 1),
-      q975 = qbeta(0.975, shape1 = D_h + 1, shape2 = N_h - D_h + 1),
-      MLE_f = AF_h / A_h, # note this is equivalent to the mode of beta(AF_h + 1, A_h - AF_h +1)
-      q025_f = qbeta(0.025, shape1 = AF_h + 1, shape2 = A_h - AF_h + 1),
-      q975_f = qbeta(0.975, shape1 = AF_h + 1, shape2 = A_h - AF_h + 1)
+      q975 = qbeta(0.975, shape1 = D_h + 1, shape2 = N_h - D_h + 1)
     )
   
   # merge both
