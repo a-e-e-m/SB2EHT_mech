@@ -1,4 +1,4 @@
-# SB2EHT_mech
+# SB2EHT_mech [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22961276.svg)](https://doi.org/10.5281/zenodo.22961276)
 
 ## Description
 This repository contains the code and data to reproduce the analysis in the research article "Inferring a novel insecticide resistance metric and exposure variability in mosquito bioassays across Africa" (full reference below).
@@ -20,9 +20,17 @@ The code contained in this repository is released under the MIT license, see the
 This repository contains data from as series of studies, as listed in Tables 1 and S1 of the research article cited under [Reference](#Reference), which are publicly available or which the corresponding authors made available to us. For access to any data contained in this repository please consult the corresponding original publications referenced in the research article cited under [Reference](#Reference). 
 
 ## Citation
+
 If you use this code, please cite:
-> **Adrian Denz, SB2EHT_mech, 2026.**  
-> And include the full reference to the research article cited under [Reference](#Reference).
+
+> **Adrian Denz, SB2EHT_mech, v1.0.0, 2026.**
+> https://doi.org/10.5281/zenodo.22961277
+
+Please also include the full reference to the associated research article listed under [Reference](#reference).
+
+For the software repository across all versions, see the Zenodo archive:
+https://doi.org/10.5281/zenodo.22961276
+
 
 ## Funding
 Adrian Denz was funded by the Swiss National Science Foundation (SNSF) [grant numbers 203017, 225815].

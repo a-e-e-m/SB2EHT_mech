@@ -3,6 +3,8 @@ message: "If you use this software, please cite it as below and also cite the as
 title: "SB2EHT_mech"
 type: software
 version: 1.0.0
+doi: "10.5281/zenodo.22961277"
+date-released: 2026-09-25
 
 authors:
   - family-names: Denz
